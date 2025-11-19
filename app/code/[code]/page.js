@@ -5,14 +5,14 @@ import ClientStats from "./ClientStats";
 
 const prisma = new PrismaClient();
 
-export default async function CodePage({ params }) {
+export default async function CodeStatsPage({ params }) {
   const { code } = params;
 
   const link = await prisma.link.findUnique({
     where: { shortCode: code },
   });
 
-  if (!link) return <div>Link not found</div>;
+  if (!link) return <div>404 - Stats Not Found</div>;
 
   return (
     <ClientStats
