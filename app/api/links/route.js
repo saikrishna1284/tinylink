@@ -1,19 +1,16 @@
-export const dynamic = "force-dynamic";   // 🔥 Prevents Next.js static build crashes
+export const dynamic = "force-dynamic";
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-// ---------------------------------------------
-// GET /api/links  → Return list of links
-// ---------------------------------------------
+// GET /api/links
 export async function GET() {
   try {
     const links = await prisma.link.findMany({
       orderBy: { createdAt: "desc" },
     });
 
-    // 🔥 Convert Prisma objects → plain JSON-safe objects
-    const safeLinks = links.map(link => ({
+    const safeLinks = links.map((link) => ({
       id: link.id,
       fullUrl: link.fullUrl,
       shortCode: link.shortCode,
@@ -29,47 +26,31 @@ export async function GET() {
   }
 }
 
-// ---------------------------------------------
-// POST /api/links → Create a new short link
-// ---------------------------------------------
+// POST /api/links
 export async function POST(req) {
   try {
     const body = await req.json();
     const { url, customCode } = body;
 
-    const code =
-      customCode || Math.random().toString(36).substring(2, 8);
+    const code = customCode || Math.random().toString(36).substring(2, 8);
 
-    // Validate URL
     const urlRegex = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
     if (!urlRegex.test(url)) {
-      return Response.json(
-        { error: "Invalid URL" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Invalid URL" }, { status: 400 });
     }
 
-    // Check if short code already exists
     const existing = await prisma.link.findUnique({
       where: { shortCode: code },
     });
 
     if (existing) {
-      return Response.json(
-        { error: "Code already exists" },
-        { status: 409 }
-      );
+      return Response.json({ error: "Code already exists" }, { status: 409 });
     }
 
-    // Create link
     const link = await prisma.link.create({
-      data: {
-        fullUrl: url,
-        shortCode: code,
-      },
+      data: { fullUrl: url, shortCode: code },
     });
 
-    // 🔥 Make plain JSON object (no Prisma class)
     const safeLink = {
       id: link.id,
       fullUrl: link.fullUrl,
